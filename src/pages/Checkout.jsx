@@ -74,94 +74,191 @@ export default function Checkout() {
   };
 
   const printReceipt = (orderId) => {
-    const receiptWindow = window.open('', '_blank');
-    const receiptContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Receipt</title>
+    try {
+      const receiptWindow = window.open('', '_blank');
+      if (!receiptWindow) {
+        console.warn('Popup was blocked. Showing receipt in current window.');
+        // Create a temporary div to hold the receipt content
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = `
           <style>
             @media print {
-              body {
-                font-family: 'Courier New', monospace;
+              body * {
+                visibility: hidden;
+              }
+              #receipt-print, #receipt-print * {
+                visibility: visible;
+              }
+              #receipt-print {
+                position: absolute;
+                left: 0;
+                top: 0;
                 width: 80mm;
                 margin: 0;
                 padding: 10px;
-              }
-              .receipt {
-                width: 100%;
-              }
-              .header {
-                text-align: center;
-                margin-bottom: 10px;
-              }
-              .items {
-                width: 100%;
-                margin: 10px 0;
-              }
-              .item {
-                display: flex;
-                justify-content: space-between;
-                margin: 5px 0;
-              }
-              .total {
-                border-top: 1px dashed #000;
-                margin-top: 10px;
-                padding-top: 10px;
-              }
-              .footer {
-                text-align: center;
-                margin-top: 20px;
-                font-size: 0.8em;
+                font-family: 'Courier New', monospace;
               }
               @page {
                 size: 80mm auto;
                 margin: 0;
               }
             }
+            .receipt {
+              width: 100%;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 10px;
+            }
+            .items {
+              width: 100%;
+              margin: 10px 0;
+            }
+            .item {
+              display: flex;
+              justify-content: space-between;
+              margin: 5px 0;
+            }
+            .total {
+              border-top: 1px dashed #000;
+              margin-top: 10px;
+              padding-top: 10px;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 20px;
+              font-size: 0.8em;
+            }
           </style>
-        </head>
-        <body>
-          <div class="receipt">
-            <div class="header">
-              <h2>POS System</h2>
-              <p>Receipt</p>
-              <p>Order ID: ${orderId}</p>
-              <p>${new Date().toLocaleString()}</p>
-            </div>
-            <div class="items">
-              ${cart.map(item => `
+          <div id="receipt-print">
+            <div class="receipt">
+              <div class="header">
+                <h2>POS System</h2>
+                <p>Receipt</p>
+                <p>Order ID: ${orderId}</p>
+                <p>${new Date().toLocaleString()}</p>
+              </div>
+              <div class="items">
+                ${cart.map(item => `
+                  <div class="item">
+                    <span>${item.name} x${item.quantity}</span>
+                    <span>Rs. ${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="total">
                 <div class="item">
-                  <span>${item.name} x${item.quantity}</span>
-                  <span>Rs. ${(item.price * item.quantity).toFixed(2)}</span>
+                  <span>Total:</span>
+                  <span>Rs. ${cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}</span>
                 </div>
-              `).join('')}
-            </div>
-            <div class="total">
-              <div class="item">
-                <span>Total:</span>
-                <span>Rs. ${cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}</span>
+              </div>
+              <div class="footer">
+                <p>Thank you for your purchase!</p>
+                <p>Please come again</p>
               </div>
             </div>
-            <div class="footer">
-              <p>Thank you for your purchase!</p>
-              <p>Please come again</p>
-            </div>
           </div>
-        </body>
-      </html>
-    `;
+        `;
+        document.body.appendChild(tempDiv);
+        window.print();
+        document.body.removeChild(tempDiv);
+        return;
+      }
 
-    receiptWindow.document.write(receiptContent);
-    receiptWindow.document.close();
-    receiptWindow.focus();
-    receiptWindow.print();
-    receiptWindow.close();
+      const receiptContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Receipt</title>
+            <style>
+              @media print {
+                body {
+                  font-family: 'Courier New', monospace;
+                  width: 80mm;
+                  margin: 0;
+                  padding: 10px;
+                }
+                .receipt {
+                  width: 100%;
+                }
+                .header {
+                  text-align: center;
+                  margin-bottom: 10px;
+                }
+                .items {
+                  width: 100%;
+                  margin: 10px 0;
+                }
+                .item {
+                  display: flex;
+                  justify-content: space-between;
+                  margin: 5px 0;
+                }
+                .total {
+                  border-top: 1px dashed #000;
+                  margin-top: 10px;
+                  padding-top: 10px;
+                }
+                .footer {
+                  text-align: center;
+                  margin-top: 20px;
+                  font-size: 0.8em;
+                }
+                @page {
+                  size: 80mm auto;
+                  margin: 0;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="receipt">
+              <div class="header">
+                <h2>POS System</h2>
+                <p>Receipt</p>
+                <p>Order ID: ${orderId}</p>
+                <p>${new Date().toLocaleString()}</p>
+              </div>
+              <div class="items">
+                ${cart.map(item => `
+                  <div class="item">
+                    <span>${item.name} x${item.quantity}</span>
+                    <span>Rs. ${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="total">
+                <div class="item">
+                  <span>Total:</span>
+                  <span>Rs. ${cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}</span>
+                </div>
+              </div>
+              <div class="footer">
+                <p>Thank you for your purchase!</p>
+                <p>Please come again</p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      receiptWindow.document.write(receiptContent);
+      receiptWindow.document.close();
+      receiptWindow.focus();
+      receiptWindow.print();
+      receiptWindow.close();
+    } catch (error) {
+      console.error('Error printing receipt:', error);
+      // Don't throw the error, just log it and continue
+      // The order is still processed successfully
+    }
   };
 
   const handleCheckout = async () => {
     try {
       setLoading(true);
+      console.log('Starting checkout process...');
+      
       // Create order
       const orderData = {
         items: cart.map(item => ({
@@ -176,25 +273,41 @@ export default function Checkout() {
         createdAt: new Date()
       };
 
+      console.log('Creating order with data:', orderData);
       const orderRef = await addDoc(collection(db, 'orders'), orderData);
+      console.log('Order created successfully with ID:', orderRef.id);
 
       // Update product stock
+      console.log('Updating product stock...');
       for (const item of cart) {
-        const productRef = doc(db, 'products', item.id);
-        await updateDoc(productRef, {
-          stock: item.stock - item.quantity
-        });
+        try {
+          console.log('Processing item:', item);
+          const productRef = doc(db, 'products', item.id);
+          const newStock = item.stock - item.quantity;
+          console.log(`Updating stock for product ${item.id} from ${item.stock} to ${newStock}`);
+          
+          await updateDoc(productRef, {
+            stock: newStock
+          });
+          console.log('Stock updated successfully for product:', item.id);
+        } catch (itemError) {
+          console.error('Error updating stock for item:', item, itemError);
+          throw new Error(`Failed to update stock for product ${item.name}: ${itemError.message}`);
+        }
       }
 
       // Print receipt with order ID
+      console.log('Printing receipt for order:', orderRef.id);
       printReceipt(orderRef.id);
 
       // Clear cart
+      console.log('Clearing cart and showing success message');
       setCart([]);
       setShowSuccess(true);
     } catch (error) {
-      console.error('Error processing order:', error);
-      alert('Error processing order. Please try again.');
+      console.error('Detailed error in checkout process:', error);
+      console.error('Error stack:', error.stack);
+      alert(`Error processing order: ${error.message}. Please try again.`);
     } finally {
       setLoading(false);
     }
